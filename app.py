@@ -13,6 +13,7 @@ import plotly.figure_factory as ff
 from sklearn.metrics import accuracy_score
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
 import seaborn as sns
 
 
@@ -64,13 +65,31 @@ user_data = user_report()
 st.subheader('Patient Data')
 st.write(user_data)
 
+# Hyperparameter Tuning
+param_grid = {
+    'n_estimators': [200, 300, 1000, 1200],
+    'max_depth': [10, 20, 30, None],
+    'min_samples_split': [2, 5, 10],
+    'min_samples_leaf': [1, 2, 4]
+}
+
+
+rf = RandomForestClassifier()
+grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, cv=5, n_jobs=-1)
+grid_search.fit(x_train, y_train)
+
+best_params = grid_search.best_params_
+best_score = grid_search.best_score_
+
+best_rf = grid_search.best_estimator_
+test_accuracy = best_rf.score(x_test, y_test)
 
 
 
 # MODEL
-rf  = RandomForestClassifier()
-rf.fit(x_train, y_train)
-user_result = rf.predict(user_data)
+# rf  = RandomForestClassifier()
+# rf.fit(x_train, y_train)
+user_result = best_rf.predict(user_data)
 
 
 
@@ -175,4 +194,6 @@ else:
   output = 'You are Diabetic'
 st.title(output)
 st.subheader('Accuracy: ')
-st.write(str(accuracy_score(y_test, rf.predict(x_test))*100)+'%')
+st.write(str(accuracy_score(y_test, best_rf.predict(x_test))*100)+'%')
+
+st.write("Best Parameters:", grid_search.best_params_)
